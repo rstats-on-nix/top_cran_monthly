@@ -1,0 +1,63 @@
+name: Download and Process CRAN Logs (Last 30 Days)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  process_logs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download CRAN logs for last 30 days
+        run: |
+          current_date=$(date +'%Y-%m-%d')
+          current_year=$(date +'%Y')
+          echo "Current date: $current_date, Year: $current_year"
+          for i in {0..29}; do
+            day=$(date -d "$current_date -$i day" +'%Y-%m-%d')
+            url="http://cran-logs.rstudio.com/${current_year}/${day}.csv.gz"
+            echo "Downloading ${url} ..."
+            curl -s -f -O "${url}" || echo "WARNING: ${url} not found."
+          done
+
+      - name: Process and count each log file
+        run: |
+          for file in *.csv.gz; do
+            [ -e "$file" ] || continue
+            day=$(basename "$file" .csv.gz)
+            echo "Processing $file for date $day ..."
+            gunzip -c "$file" | tail -n +2 | sed 's/"//g' | cut -d',' -f1,7 | sort | uniq -c | \
+              awk '{print $2","$3","$1}' > "count_${day}.csv"
+          done
+
+      - name: Aggregate all daily counts
+        run: |
+          echo "date,package,count" > aggregated_counts.csv
+          cat count_*.csv | sort -t, -k1,1 -k2,2 | \
+          awk -F, 'BEGIN { OFS="," } {
+                    key = $1","$2
+                    counts[key] += $3
+                 }
+                 END {
+                    for (k in counts) {
+                      split(k, arr, ",")
+                      print arr[1], arr[2], counts[k]
+                    }
+                 }' >> aggregated_counts.csv
+
+      - name: Commit and push aggregated_counts.csv
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          if [ -n "$(git status --porcelain aggregated_counts.csv)" ]; then
+            git add aggregated_counts.csv
+            git commit -m "Update aggregate counts for CRAN logs"
+            git push
+          else
+            echo "No changes to commit."
+          fi
