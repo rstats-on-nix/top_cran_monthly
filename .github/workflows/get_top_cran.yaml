@@ -50,14 +50,12 @@ jobs:
             if(length(files)==0) stop(\"No CSV files found\");
             result <- vector(mode = \"list\", length = length(files));
             for(i in seq_along(files)) {
-              print(files[i]);
               dt <- fread(files[i]);
               out <- dt[, .N, by = package];
-              print(head(out));
               result[[i]] <- out;
             };
             dt <- rbindlist(result);
-            agg <- dt[, .N, by = package][order(-N)];
+            agg <- dt[, by = package, .(N = sum(N))][order(-N)];
             fwrite(agg, \"aggregated_counts.csv\")"'
 
       - name: Commit and push aggregated_counts.csv
