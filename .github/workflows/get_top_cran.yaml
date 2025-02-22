@@ -48,7 +48,7 @@ jobs:
           nix-shell -p R rPackages.data_table --run 'Rscript -e "library(data.table);
             files <- list.files(pattern=\"\\\d.*csv\");
             if(length(files)==0) stop(\"No CSV files found\");
-            result <- vector(mode = "list", length = length(files));
+            result <- vector(mode = \"list\", length = length(files));
             for(i in seq_along(files)) {
               dt <- fread(files[i]);
               result[[i]] <- dt[, .N, by = package];
