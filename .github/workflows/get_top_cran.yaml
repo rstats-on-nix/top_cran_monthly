@@ -46,7 +46,7 @@ jobs:
       - name: Aggregate counts by package using R
         run: |
           nix-shell -p R rPackages.data_table --run 'Rscript -e "library(data.table);
-            files <- list.files(pattern=\"\\d.*csv\");
+            files <- list.files(pattern=\"\\\d.*csv\");
             if(length(files)==0) stop(\"No CSV files found\");
             dt <- rbindlist(lapply(files, fread));
             agg <- dt[, .N, by = package];
