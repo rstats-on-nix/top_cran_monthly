@@ -26,29 +26,23 @@ jobs:
             curl -s -f -O "${url}" || echo "WARNING: ${url} not found."
           done
 
-      - name: Process and count each log file
+      - name: Decompress each log file
         run: |
           for file in *.csv.gz; do
             [ -e "$file" ] || continue
             day=$(basename "$file" .csv.gz)
-            echo "Processing $file for date $day ..."
-            gunzip -c "$file" | tail -n +2 | sed 's/"//g' | cut -d',' -f1,7 | sort | uniq -c | \
-              awk '{print $2","$3","$1}' > "count_${day}.csv"
+            echo "Decompressing $file to ${day}.csv ..."
+            gunzip -c "$file" > "${day}.csv"
           done
 
-      - name: Aggregate all daily counts
+      - name: Aggregate counts by package using R
         run: |
-          echo "package,count" > aggregated_counts.csv
-          cat count_*.csv | sort -t, -k2,2 | \
-          awk -F, 'BEGIN { OFS="," } {
-                    key = $2
-                    counts[key] += $3
-                 }
-                 END {
-                    for (k in counts) {
-                      print k, counts[k]
-                    }
-                 }' >> aggregated_counts.csv
+          nix-shell -p R rPackages.data_table --run 'Rscript -e "library(data.table); 
+            files <- list.files(pattern=\"^[0-9]{4}-[0-9]{2}-[0-9]{2}\\.csv$\"); 
+            if(length(files)==0) stop(\"No CSV files found\"); 
+            dt <- rbindlist(lapply(files, fread)); 
+            agg <- dt[, .N, by = package]; 
+            fwrite(agg, \"aggregated_counts.csv\")"'
 
       - name: Commit and push aggregated_counts.csv
         env:
