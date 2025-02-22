@@ -50,8 +50,11 @@ jobs:
             if(length(files)==0) stop(\"No CSV files found\");
             result <- vector(mode = \"list\", length = length(files));
             for(i in seq_along(files)) {
+              print(files[i]);
               dt <- fread(files[i]);
-              result[[i]] <- dt[, .N, by = package];
+              out <- dt[, .N, by = package];
+              print(head(out));
+              result[[i]] <- out;
             };
             dt <- rbindlist(result);
             agg <- dt[, .N, by = package][order(-N)];
