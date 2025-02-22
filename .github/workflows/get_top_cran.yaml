@@ -1,7 +1,10 @@
 name: Download and Process CRAN Logs (Last 30 Days)
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [master, main]
+  schedule:
+    - cron: '0 12 * * 1'
 
 jobs:
   process_logs:
