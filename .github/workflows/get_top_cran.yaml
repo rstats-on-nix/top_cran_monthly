@@ -38,16 +38,15 @@ jobs:
 
       - name: Aggregate all daily counts
         run: |
-          echo "date,package,count" > aggregated_counts.csv
-          cat count_*.csv | sort -t, -k1,1 -k2,2 | \
+          echo "package,count" > aggregated_counts.csv
+          cat count_*.csv | sort -t, -k2,2 | \
           awk -F, 'BEGIN { OFS="," } {
-                    key = $1","$2
+                    key = $2
                     counts[key] += $3
                  }
                  END {
                     for (k in counts) {
-                      split(k, arr, ",")
-                      print arr[1], arr[2], counts[k]
+                      print k, counts[k]
                     }
                  }' >> aggregated_counts.csv
 
