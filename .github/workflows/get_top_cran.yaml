@@ -23,7 +23,7 @@ jobs:
           current_date=$(date +'%Y-%m-%d')
           current_year=$(date +'%Y')
           echo "Current date: $current_date, Year: $current_year"
-          for i in {0..1}; do
+          for i in {0..4}; do
             day=$(date -d "$current_date -$i day" +'%Y-%m-%d')
             url="http://cran-logs.rstudio.com/${current_year}/${day}.csv.gz"
             echo "Downloading ${url} ..."
