@@ -18,12 +18,12 @@ jobs:
         with:
           name: rstats-on-nix
 
-      - name: Download CRAN logs for last 30 days
+      - name: Download CRAN logs for last 10 days
         run: |
           current_date=$(date +'%Y-%m-%d')
           current_year=$(date +'%Y')
           echo "Current date: $current_date, Year: $current_year"
-          for i in {0..32}; do
+          for i in {0..10}; do
             day=$(date -d "$current_date -$i day" +'%Y-%m-%d')
             url="http://cran-logs.rstudio.com/${current_year}/${day}.csv.gz"
             echo "Downloading ${url} ..."
